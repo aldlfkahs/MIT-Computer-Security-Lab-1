@@ -73,11 +73,11 @@ const char *http_request_line(int fd, char *reqpath, char *env, size_t *env_len)
         return "Socket IO error";
 
     /* Parse request like "GET /foo.html HTTP/1.0" */
-    sp1 = strchr(buf, ' ');
-    if (!sp1)
+    sp1 = strchr(buf, ' ');         //find the blank to parse and return that pointer
+    if (!sp1)                       //no blank means that it cannot parse head / path
         return "Cannot parse HTTP request (1)";
     *sp1 = '\0';
-    sp1++;
+    sp1++;          //sp1 indicates path
     if (*sp1 != '/')
         return "Bad request path";
 
@@ -85,14 +85,14 @@ const char *http_request_line(int fd, char *reqpath, char *env, size_t *env_len)
     if (!sp2)
         return "Cannot parse HTTP request (2)";
     *sp2 = '\0';
-    sp2++;
+    sp2++;      //sp2 indicates protocol
 
     /* We only support GET and POST requests */
-    if (strcmp(buf, "GET") && strcmp(buf, "POST"))
+    if (strcmp(buf, "GET") && strcmp(buf, "POST"))          //shoulde started with GET or POST
         return "Unsupported request (not GET or POST)";
 
     envp += sprintf(envp, "REQUEST_METHOD=%s", buf) + 1;
-    envp += sprintf(envp, "SERVER_PROTOCOL=%s", sp2) + 1;
+    envp += sprintf(envp, "SERVER_PROTOCOL=%s", sp2) + 1;   //VUNERABLE CODE?? if sp2 is too long
 
     /* parse out query string, e.g. "foo.py?user=bob" */
     if ((qp = strchr(sp1, '?')))
@@ -102,9 +102,9 @@ const char *http_request_line(int fd, char *reqpath, char *env, size_t *env_len)
     }
 
     /* decode URL escape sequences in the requested path into reqpath */
-    url_decode(reqpath, sp1);
+    url_decode(reqpath, sp1);       //VUNERABLE FUNCTION??
 
-    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;
+    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1;   //can be overflowed because of reqpath
 
     envp += sprintf(envp, "SERVER_NAME=zoobar.org") + 1;
 
@@ -434,7 +434,7 @@ void http_serve_executable(int fd, const char *pn)
     }
 }
 
-void url_decode(char *dst, const char *src)
+void url_decode(char *dst, const char *src)         //if the url is too long??
 {
     for (;;)
     {
@@ -445,7 +445,7 @@ void url_decode(char *dst, const char *src)
             hexbuf[1] = src[2];
             hexbuf[2] = '\0';
 
-            *dst = strtol(&hexbuf[0], 0, 16);
+            *dst = strtol(&hexbuf[0], 0, 16);       //conver string to 16-base long numbers
             src += 3;
         }
         else if (src[0] == '+')

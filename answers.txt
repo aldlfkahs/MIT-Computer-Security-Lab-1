@@ -1,1 +1,54 @@
 ## Place your answers here.
+
+Part1 Exercise 2----------------
+
+exploit-2a.py
+    buffer overflowed by reqpath[2048] in http_request_line()
+
+exploit-2b.py
+    buffer overflowed by pn[1024] http_serve() because REQUEST_URI can be larger than 1024
+
+--------------------------------
+
+Part2 Exercise 3----------------
+
+I filled the stack shellcode, "AAA...A", and address of starting point of buf[0] where the shellcode is.
+Because I hijacked the reutrn address of process_client(), when that function complete his task and call return address,
+it goes to 0xbfffee08 where I injected my evil shellcode. The shell code would unlink grades.txt and it's done.
+
+--------------------------------
+
+Part3 Exercise 4----------------
+
+exploit-4a.py
+    First, I found the address of unlink() using gdb, 0x40102450
+    Similar to exercise 3, I hijacked the return address of process_client() to point the address of unlink().
+    When unlink() is called, it needs return address(in this case, just junk value), and an arguments.
+    So, I pushed those value to stack in order : JUNK, 0xbffff628, "/home/httpd/grades.txt"
+    0xbffff628 indicates the address of "/home/httpd/grades.txt"
+
+exploit-4b.py
+    In http_serve(...) fucntion, strcat(pn, name) was used, which means that if name was too long, pn can be overwritten.
+    'name' is a parameter of http_serve function and it's from our request path.
+    Thus, I used this parts to hijack the control flow. It was similar to exploit-4a.py but there are some traps.
+    First, getcwd(pn) proceeded before calling strcat(pn, name), which means "/home/httpd/lab/" was already saved at pn.
+    We should consider the size of it. Second, *handler existed between pn and %ebp. If we just overwrited junk value in it,
+    it would cause error. Thus, we should put planned address value(http_serve_none) in *handler, and also parameters of it.
+    Now, we can exploit like before.
+
+--------------------------------
+
+Part4 Exercise 5----------------
+
+void url_decode(char *dst, const char *src)
+    This function doesn't check the bounds. As I hijacked the program using this function, if the attacker requests very long
+    path, url_decdoe() just save that long string whatever.
+
+sprintf(..) in http_rquest_line(..)
+    Because sprintf doesn't check the size, we should modify it to snprintf(..)
+
+strcat(..) in http_serve(..) and dir_join(..)
+    Like above, should be modified by strncat(..)
+
+strcpy(..) in dir_join(..)
+    Same as above. It should be modified by strncpy(..)     

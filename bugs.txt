@@ -3,15 +3,40 @@
 # desc
 #
 
-[zookd.c:1612]
-description goes here. for example, the 'buf' variable can be
-overwritten by the 'msg' variable because ...
+[zookd.c:70]
+if((errmsg = http_request_line(fd, reqpath, env, &env_len)))
+reqpath
 
-    <paste offending line(s) of code here>
+[zookd.c:77]
+warnx("Forward %s to service %d", reqpath, i+1);
+overflowed reqpath makes error in this line
 
-[http.c:1512]
-another description.
+[http.c:95]
+envp += sprintf(envp, "SERVER_PROTOCOL=%s", sp2) +1;
+if sp2 is too long, envp can be overflowed
 
-    <paste offending line(s) of code here>
+[http.c:159]
+url_decode(value, sp);
+no bound-checking about value
+
+[http.c:165]
+sprintf(envvar, "HTTP_%s", buf);
+envvar
+
+[http.c:166]
+setenv(envvar, value, 1);
+value can overwrite others
+
+[http.c:168]
+setenv(buf, value, 1);
+value can overwirte others
+
+[http.c:282]
+strcat(pn, name);
+name can overwrite pn
+
+[http.c:344]
+strcpy(dst, dirname);
+strcpy is security-critical function
 
 # many more come here
